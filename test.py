@@ -1,12 +1,12 @@
-from diffpatchlib import get_diff, apply_diff
-import time, os
+from diffpatchlib import get_diff, get_unix_diff, apply_diff
+import time
 
 # Python's difflib is about 10x slower than Unix command line diff.
 # To check, run this in your shell: time diff file0.txt file1.txt -u0
 # The Unix diff ran in about 0.05s on my machine
 # The Python difflib diff took about 0.45s to run by contrast
 # After running this script, you can compare the diffs using this command:
-# diff diff0.txt unified_patch0 
+# diff pydiff.txt unixdiff.txt
 
 start1 = time.time()
 for i in range(1):
@@ -26,7 +26,7 @@ for i in range(1):
     print("generating diff took:", end - start, "seconds")
 
     start = time.time()
-    with open("diff0.txt", 'w') as f:
+    with open("pydiff.txt", 'w') as f:
         f.writelines(diff)
     end = time.time()
     print("writing diff to file took:", end - start, "seconds")
@@ -58,16 +58,17 @@ for i in range(1):
     print("reading files into memory took:", end - start, "seconds")
 
     start = time.time()
-    command = "diff " + old_filename + " " + new_filename + " -u0 > unified_patch" + str(i)
-    print("running command:", command)
-    os.system(command)
+    diff = get_unix_diff(old_filename, new_filename)
+    print("diff has", len(diff), "lines")
     end = time.time()
     print("running Unix diff took:", end - start, "seconds")
+
     start = time.time()
-    with open("unified_patch" + str(i)) as f:
-        diff = f.readlines()
+    with open("unixdiff.txt", 'w') as f:
+        f.writelines(diff)
     end = time.time()
-    print("reading diff took:", end - start, "seconds")
+    print("writing diff to file took:", end - start, "seconds")
+
     #print(diff)
     start = time.time()
     new_a = apply_diff(a,diff) 

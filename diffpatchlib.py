@@ -31,6 +31,7 @@ import difflib
 import re
 import traceback
 import sys
+import subprocess
 
 _hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
 
@@ -57,6 +58,8 @@ def __apply_patch(oldlines, patchlines):
     """
     Apply unified diff patch to string old to recover newer string.
     """
+    if not patchlines:
+        return oldlines
     result = []
     patch_pointer = 0
     old_current_pointer = 0
@@ -136,6 +139,25 @@ def get_diff(old_lines, new_lines, *, old_filename = "old_file", new_filename = 
 #        new_lines = f.readlines()
     return __get_tested_patch(old_lines, new_lines, old_filename, new_filename)
 
+def get_unix_diff(old_filename, new_filename):
+    """
+    Parameters
+    ----------
+    old_filename : string
+    new_filename : string
+
+    Returns
+    -------
+    patch_lines : [string]
+    """
+    try:
+        subprocess.check_output(['diff', old_filename, new_filename, '-u0'])
+        return []
+    except subprocess.CalledProcessError as e:
+        if e.returncode != 0 and e.returncode != 1:
+            raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+        return str(e.output, 'utf-8').splitlines(True)
+
 def apply_diff(old_lines, patch_lines):
     """
     Parameters
@@ -150,6 +172,7 @@ def apply_diff(old_lines, patch_lines):
     return __apply_patch(old_lines, patch_lines)
 
 if __name__ == '__main__': 
-    print("This library provides 2 useful functions:")
+    print("This library provides 3 useful functions:")
     print("1. get_diff(old, new, old_filename, new_filename)")
-    print("2. apply_diff(old, patch)")
+    print("2. get_unix_diff(old_filename, new_filename)")
+    print("3. apply_diff(old, patch)")
