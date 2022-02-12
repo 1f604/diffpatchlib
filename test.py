@@ -1,4 +1,4 @@
-from diffpatchlib import get_diff, get_unix_diff, apply_diff
+from diffpatchlib import check_hash_matches, get_diff, get_unix_diff, apply_diff
 import time
 
 # Python's difflib is about 10x slower than Unix command line diff.
@@ -36,6 +36,8 @@ for i in range(1):
     assert(apply_diff(a,diff) == b)
     end = time.time()
     print("applying diff took:", end - start, "seconds")
+
+    check_hash_matches(a, "pydiff.txt")
 
 end1 = time.time()
 print("In total it took:", end1 - start1, "seconds")
@@ -75,6 +77,8 @@ for i in range(1):
     assert(apply_diff(a,diff) == b)
     end = time.time()
     print("applying diff took:", end - start, "seconds")
+
+    check_hash_matches(a, "unixdiff.txt")
 
 end1 = time.time()
 print("In total it took:", end1 - start1, "seconds")

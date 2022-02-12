@@ -28,12 +28,33 @@ print(apply_diff(a,diff) == b)
 from __future__ import print_function
 
 import difflib
+import hashlib
 import re
 import traceback
 import sys
 import subprocess
 
+_diff_header_pat = re.compile("^sha256: ([0-9a-f]+)$")
 _hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
+
+# https://stackoverflow.com/a/44873382
+def sha256sum(filename):
+    """
+    Parameters
+    ----------
+    filename : string
+
+    Returns
+    -------
+    hex_digest : string
+    """
+    h  = hashlib.sha256()
+    b  = bytearray(128*1024)
+    mv = memoryview(b)
+    with open(filename, 'rb', buffering=0) as f:
+        for n in iter(lambda : f.readinto(mv), 0):
+            h.update(mv[:n])
+    return h.hexdigest()
 
 def __check_newline_terminated(files):
     for filename, lines in files:
@@ -71,7 +92,7 @@ def __apply_patch(oldlines, patchlines):
     while patch_pointer < len(patchlines):
         # get starting line number from hunk header
         m = _hdr_pat.match(patchlines[patch_pointer])
-        if not m: 
+        if not m:
             print(patchlines)
             raise Exception("Cannot process diff")
         patch_pointer += 1
@@ -137,7 +158,9 @@ def get_diff(old_lines, new_lines, *, old_filename = "old_file", new_filename = 
 #        old_lines = f.readlines()
 #    with open(filename2) as f:
 #        new_lines = f.readlines()
-    return __get_tested_patch(old_lines, new_lines, old_filename, new_filename)
+    old_hash = sha256sum(old_filename)
+    result = ["sha256: " + old_hash + '\n']
+    return result + __get_tested_patch(old_lines, new_lines, old_filename, new_filename)
 
 def get_unix_diff(old_filename, new_filename):
     """
@@ -150,13 +173,15 @@ def get_unix_diff(old_filename, new_filename):
     -------
     patch_lines : [string]
     """
+    old_hash = sha256sum(old_filename)
+    result = ["sha256: " + old_hash + '\n']
     try:
         subprocess.check_output(['diff', old_filename, new_filename, '-u0'])
         return []
     except subprocess.CalledProcessError as e:
         if e.returncode != 0 and e.returncode != 1:
             raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        return str(e.output, 'utf-8').splitlines(True)
+        return result + str(e.output, 'utf-8').splitlines(True)
 
 def apply_diff(old_lines, patch_lines):
     """
@@ -169,10 +194,44 @@ def apply_diff(old_lines, patch_lines):
     -------
     new_lines : [string]
     """
-    return __apply_patch(old_lines, patch_lines)
+    return __apply_patch(old_lines, patch_lines[1:])
+
+def check_hash_matches(lines, diff_filename):
+    with open(diff_filename) as f:
+        patch_lines = f.readlines()
+    contents = ''.join(lines).encode('utf-8')
+    hash_of_lines = hashlib.sha256(contents).hexdigest()
+    m = _diff_header_pat.match(patch_lines[0])
+    if not m:
+        print(patch_lines[0])
+        raise Exception("Expected hash at first line of patch")
+    if m.group(1) != hash_of_lines:
+        raise Exception("Hash of lines does not match the hash in diff file")
+
+def apply_diff_verified(old_lines, patch_lines):
+    """
+    Parameters
+    ----------
+    old_lines : [string]
+    patch_lines : [string]
+
+    Returns
+    -------
+    new_lines : [string]
+    """
+    contents = ''.join(old_lines).encode('utf-8')
+    hash = hashlib.sha256(contents).hexdigest()
+    m = _diff_header_pat.match(patch_lines[0])
+    if not m:
+        print(patch_lines[0])
+        raise Exception("Expected hash at first line of patch")
+    if m.group(1) != hash:
+        raise Exception("Hash of file does not match the hash in patch")
+    return __apply_patch(old_lines, patch_lines[1:])
 
 if __name__ == '__main__': 
     print("This library provides 3 useful functions:")
     print("1. get_diff(old, new, old_filename, new_filename)")
     print("2. get_unix_diff(old_filename, new_filename)")
     print("3. apply_diff(old, patch)")
+    print("4. check_hash_matches(lines, diff_filename)")
