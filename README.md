@@ -3,12 +3,12 @@ Python library for generating and applying diffs
 
 Instructions for use:
 
-* Put diffpatchlib.py in the same directory as your Python script.
+* Put `diffpatchlib.py` in the same directory as your Python script.
 * Follow the usage instructions in diffpatchlib.py
 
-Run test.py to check that the library works. You will need to do so on a Linux machine where the `diff` utility is available. It will tell you whether Python's built-in difflib diff implementation is slower than the Linux command line `diff` utility.
+Run `test.py` to check that the library works. You will need to do so on a Linux machine where the `diff` utility is available. It will tell you whether Python's built-in difflib diff implementation is slower than the Linux command line `diff` utility.
 
-Here are the results of running the test on my Linux machine:
+Here are the results of running `test.py` on my Linux machine:
 
 ```
 reading files into memory took: 0.02922677993774414 seconds
