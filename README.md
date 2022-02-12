@@ -6,7 +6,7 @@ Instructions for use:
 * Put diffpatchlib.py in the same directory as your Python script.
 * Follow the usage instructions in diffpatchlib.py
 
-Run diffpatchlib_test.py to check that the library works. You will need to do so on a Linux machine where the `diff` utility is available. It will tell you whether Python's built-in difflib diff implementation is slower than the Linux command line `diff` utility.
+Run test.py to check that the library works. You will need to do so on a Linux machine where the `diff` utility is available. It will tell you whether Python's built-in difflib diff implementation is slower than the Linux command line `diff` utility.
 
 Here are the results of running the test on my Linux machine:
 
