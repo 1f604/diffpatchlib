@@ -34,7 +34,7 @@ import traceback
 import sys
 import subprocess
 
-_diff_header_pat = re.compile("^sha256: ([0-9a-f]+)$")
+_diff_header_pat = re.compile("^sha256s: ([0-9a-f]+) ([0-9a-f]+)$")
 _hdr_pat = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
 
 # https://stackoverflow.com/a/44873382
@@ -159,7 +159,8 @@ def get_diff(old_lines, new_lines, *, old_filename = "old_file", new_filename = 
 #    with open(filename2) as f:
 #        new_lines = f.readlines()
     old_hash = sha256sum(old_filename)
-    result = ["sha256: " + old_hash + '\n']
+    new_hash = sha256sum(new_filename)
+    result = ["sha256s: " + old_hash + " " + new_hash + '\n']
     return result + __get_tested_patch(old_lines, new_lines, old_filename, new_filename)
 
 def get_unix_diff(old_filename, new_filename):
@@ -174,14 +175,33 @@ def get_unix_diff(old_filename, new_filename):
     patch_lines : [string]
     """
     old_hash = sha256sum(old_filename)
-    result = ["sha256: " + old_hash + '\n']
+    new_hash = sha256sum(new_filename)
+    result = ["sha256s: " + old_hash + " " + new_hash + '\n']
     try:
         subprocess.check_output(['diff', old_filename, new_filename, '-u0'])
-        return []
+        result = []
     except subprocess.CalledProcessError as e:
         if e.returncode != 0 and e.returncode != 1:
             raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-        return result + str(e.output, 'utf-8').splitlines(True)
+        result += str(e.output, 'utf-8').splitlines(True)
+    # verify the patch
+    with open(old_filename) as f:
+        old_lines = f.readlines()
+    applied_lines = apply_diff(old_lines, result)
+    check_hash_matches(applied_lines, new_hash)
+    return result
+
+def get_hashes(patch_filename):
+    with open(patch_filename) as f:
+        patch_line = f.readline()
+        return __get_hashes(patch_line)
+
+def __get_hashes(first_line_of_patch):
+    m = _diff_header_pat.match(first_line_of_patch)
+    if not m:
+        print(first_line_of_patch)
+        raise Exception("Expected hashes at first line of patch")
+    return m.group(1), m.group(2)
 
 def apply_diff(old_lines, patch_lines):
     """
@@ -196,19 +216,30 @@ def apply_diff(old_lines, patch_lines):
     """
     return __apply_patch(old_lines, patch_lines[1:])
 
-def check_hash_matches(lines, diff_filename):
-    with open(diff_filename) as f:
-        patch_lines = f.readlines()
+def __apply_diff_verified(old_lines, patch_lines):
+    """
+    Parameters
+    ----------
+    old_lines : [string]
+    patch_lines : [string]
+
+    Returns
+    -------
+    new_lines : [string]
+    """
+    old_hash, new_hash = __get_hashes(patch_lines[0])
+    check_hash_matches(old_lines, old_hash)
+    new_lines = __apply_patch(old_lines, patch_lines[1:])
+    check_hash_matches(new_lines, new_hash)
+    return new_lines
+
+def check_hash_matches(lines, hash):
     contents = ''.join(lines).encode('utf-8')
     hash_of_lines = hashlib.sha256(contents).hexdigest()
-    m = _diff_header_pat.match(patch_lines[0])
-    if not m:
-        print(patch_lines[0])
-        raise Exception("Expected hash at first line of patch")
-    if m.group(1) != hash_of_lines:
-        raise Exception("Hash of lines does not match the hash in diff file")
+    if hash != hash_of_lines:
+        raise Exception("Hash of lines does not match the hash supplied")
 
-def apply_diff_verified(old_lines, patch_lines):
+def __apply_diff_verified(old_lines, patch_lines):
     """
     Parameters
     ----------
@@ -231,7 +262,7 @@ def apply_diff_verified(old_lines, patch_lines):
 
 if __name__ == '__main__': 
     print("This library provides 4 useful functions:")
-    print("1. get_diff(old, new, old_filename, new_filename)")
-    print("2. get_unix_diff(old_filename, new_filename)")
-    print("3. apply_diff(old, patch)")
-    print("4. check_hash_matches(lines, diff_filename)")
+    print("1. get_unix_diff(old_filename, new_filename)")
+    print("2. apply_diff(old_lines, patch_lines)")
+    print("3. check_hash_matches(lines, hash)")
+    print("4. get_hashes(patch_filename)")
