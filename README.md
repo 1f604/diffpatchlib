@@ -12,17 +12,17 @@ Here is the output from running `test.py` on my Linux machine:
 
 ```
 $ python test.py 
-reading files into memory took: 0.03214383125305176 seconds
+reading files into memory took: 0.0336148738861084 seconds
 diff has 897 lines
-generating diff took: 0.47491002082824707 seconds
-writing diff to file took: 0.0002875328063964844 seconds
-applying diff took: 0.0041806697845458984 seconds
-In total it took: 0.5116124153137207 seconds
+generating diff took: 0.4804341793060303 seconds
+writing diff to file took: 0.00028586387634277344 seconds
+applying diff took: 0.004276752471923828 seconds
+In total it took: 0.5187017917633057 seconds
 ====== Now trying the Unix command line diff utility ======
-reading files into memory took: 0.030364036560058594 seconds
-running command: diff file0.txt file1.txt -u0 > unified_patch0
-running Unix diff took: 0.02668166160583496 seconds
-reading diff took: 0.0002357959747314453 seconds
-applying diff took: 0.006578922271728516 seconds
-In total it took: 0.0639808177947998 seconds
+reading files into memory took: 0.030704975128173828 seconds
+diff has 897 lines
+running Unix diff took: 0.052553415298461914 seconds
+writing diff to file took: 0.0003330707550048828 seconds
+applying diff took: 0.01743173599243164 seconds
+In total it took: 0.10115647315979004 seconds
 ```
