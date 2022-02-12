@@ -6,23 +6,16 @@
 
 """ Example usage:
 
-from diffpatchlib import get_diff, apply_diff
+from diffpatchlib import get_verified_unix_diff, apply_diff_unchecked
 
-a = ["aa", "bb", "cc\n"]
-b = ["aa", "dd", "cc\n"]
-
-diff = get_diff(a, b)
-print(diff)
-print(apply_diff(a, diff))
-
-with open("file1.txt") as f:
+with open("file0.txt") as f:
     a = f.readlines()
-with open("file2.txt") as f:
+with open("file1.txt") as f:
     b = f.readlines()
 
-diff = get_diff(a, b, old_filename = "file1", new_filename = "file2")
+diff = get_verified_unix_diff("file0.txt", "file1.txt")
 print(diff)
-print(apply_diff(a,diff) == b)
+print(apply_diff_unchecked(a,diff) == b)
 """
 
 from __future__ import print_function
@@ -163,7 +156,7 @@ def get_diff(old_lines, new_lines, *, old_filename = "old_file", new_filename = 
     result = ["sha256s: " + old_hash + " " + new_hash + '\n']
     return result + __get_tested_patch(old_lines, new_lines, old_filename, new_filename)
 
-def get_unix_diff(old_filename, new_filename):
+def get_verified_unix_diff(old_filename, new_filename):
     """
     Parameters
     ----------
@@ -187,7 +180,7 @@ def get_unix_diff(old_filename, new_filename):
     # verify the patch
     with open(old_filename) as f:
         old_lines = f.readlines()
-    applied_lines = apply_diff(old_lines, result)
+    applied_lines = apply_diff_unchecked(old_lines, result)
     check_hash_matches(applied_lines, new_hash)
     return result
 
@@ -203,8 +196,12 @@ def __get_hashes(first_line_of_patch):
         raise Exception("Expected hashes at first line of patch")
     return m.group(1), m.group(2)
 
-def apply_diff(old_lines, patch_lines):
+def apply_diff_unchecked(old_lines, patch_lines):
     """
+    VERY IMPORTANT: You must manually verify that the results are correct.
+
+    This is because the verification functions are slow.
+
     Parameters
     ----------
     old_lines : [string]
@@ -262,7 +259,7 @@ def __apply_diff_verified(old_lines, patch_lines):
 
 if __name__ == '__main__': 
     print("This library provides 4 useful functions:")
-    print("1. get_unix_diff(old_filename, new_filename)")
-    print("2. apply_diff(old_lines, patch_lines)")
-    print("3. check_hash_matches(lines, hash)")
-    print("4. get_hashes(patch_filename)")
+    print("1. get_verified_unix_diff(old_filename, new_filename)")
+    print("2. apply_diff_unchecked(old_lines, patch_lines)")
+    print("3. get_hashes(patch_filename)")
+    print("4. check_hash_matches(lines, hash)")

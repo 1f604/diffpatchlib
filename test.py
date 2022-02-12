@@ -1,4 +1,4 @@
-from diffpatchlib import check_hash_matches, get_diff, get_hashes, get_unix_diff, apply_diff
+from diffpatchlib import check_hash_matches, get_diff, get_hashes, get_verified_unix_diff, apply_diff_unchecked
 import time
 
 # Python's difflib is about 10x slower than Unix command line diff.
@@ -33,14 +33,14 @@ for i in range(1):
 
     #print(diff)
     start = time.time()
-    assert(apply_diff(a,diff) == b)
+    assert(apply_diff_unchecked(a,diff) == b)
     end = time.time()
     print("applying diff took:", end - start, "seconds")
 
     old_hash, new_hash = get_hashes("pydiff.txt")
     check_hash_matches(a, old_hash)
     check_hash_matches(b, new_hash)
-    check_hash_matches(apply_diff(a,diff), new_hash)
+    check_hash_matches(apply_diff_unchecked(a,diff), new_hash)
 
 end1 = time.time()
 print("In total it took:", end1 - start1, "seconds")
@@ -63,7 +63,7 @@ for i in range(1):
     print("reading files into memory took:", end - start, "seconds")
 
     start = time.time()
-    diff = get_unix_diff(old_filename, new_filename)
+    diff = get_verified_unix_diff(old_filename, new_filename)
     print("diff has", len(diff), "lines")
     end = time.time()
     print("running Unix diff took:", end - start, "seconds")
@@ -76,15 +76,15 @@ for i in range(1):
 
     #print(diff)
     start = time.time()
-    new_a = apply_diff(a,diff) 
-    assert(apply_diff(a,diff) == b)
+    new_a = apply_diff_unchecked(a,diff)
+    assert(apply_diff_unchecked(a,diff) == b)
     end = time.time()
     print("applying diff took:", end - start, "seconds")
 
     old_hash, new_hash = get_hashes("unixdiff.txt")
     check_hash_matches(a, old_hash)
     check_hash_matches(b, new_hash)
-    check_hash_matches(apply_diff(a,diff), new_hash)
+    check_hash_matches(apply_diff_unchecked(a,diff), new_hash)
 
 end1 = time.time()
 print("In total it took:", end1 - start1, "seconds")
