@@ -8,7 +8,7 @@ Instructions for use:
 
 Run `test.py` to check that the library works. You will need to do so on a Linux machine where the `diff` utility is available. It will tell you whether Python's built-in difflib diff implementation is slower than the Linux command line `diff` utility.
 
-Here are the results of running `test.py` on my Linux machine:
+Here is the output from running `test.py` on my Linux machine:
 
 ```
 reading files into memory took: 0.02922677993774414 seconds
