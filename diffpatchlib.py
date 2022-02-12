@@ -230,7 +230,7 @@ def apply_diff_verified(old_lines, patch_lines):
     return __apply_patch(old_lines, patch_lines[1:])
 
 if __name__ == '__main__': 
-    print("This library provides 3 useful functions:")
+    print("This library provides 4 useful functions:")
     print("1. get_diff(old, new, old_filename, new_filename)")
     print("2. get_unix_diff(old_filename, new_filename)")
     print("3. apply_diff(old, patch)")
